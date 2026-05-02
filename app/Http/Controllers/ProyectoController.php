@@ -48,7 +48,7 @@ class ProyectoController extends Controller
     public function actualizarEstado(Request $request, $id)
     {
         $request->validate([
-            'estado' => 'required|in:PENDIENTE,EN_PROCESO,EN_EJECUCION,FINALIZADO,CANCELADO',
+            'estado' => 'required|in:PENDIENTE,EN_EJECUCION,FINALIZADO,CANCELADO',
         ]);
 
         $proyecto = Proyecto::findOrFail($id);

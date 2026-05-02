@@ -69,28 +69,46 @@ class DocumentoController extends Controller
      */
     public function upload(Request $request)
     {
+        // Acepta PDF (máx 10 MB) y DWG de AutoCAD (máx 50 MB)
         $request->validate([
-            'file'        => 'required|file|mimes:pdf|max:10240',
+            'file'        => 'required|file|max:51200',
             'proyecto_id' => 'required|exists:proyectos,id',
         ]);
 
-        $archivo = $request->file('file');
+        $archivo    = $request->file('file');
+        $extension  = strtolower($archivo->getClientOriginalExtension());
 
-        // Validación extra: leer los primeros 5 bytes del archivo
-        // Un PDF válido siempre empieza con "%PDF-" (hex: 25 50 44 46 2D)
+        // Solo permitimos .pdf y .dwg
+        if (!in_array($extension, ['pdf', 'dwg'])) {
+            return response()->json(
+                ['message' => 'Solo se permiten archivos PDF o DWG (AutoCAD)'],
+                422
+            );
+        }
+
+        // Validación por magic bytes del archivo
         $handle = fopen($archivo->getPathname(), 'rb');
         $header = fread($handle, 5);
         fclose($handle);
 
-        if ($header !== '%PDF-') {
+        if ($extension === 'pdf' && $header !== '%PDF-') {
+            // Un PDF válido siempre empieza con "%PDF-"
             return response()->json(
                 ['message' => 'El archivo no es un PDF válido'],
                 422
             );
         }
 
-        // Nombre único basado en UUID para evitar colisiones y sobreescrituras
-        $nombreGuardado = Str::uuid() . '.pdf';
+        if ($extension === 'dwg' && substr($header, 0, 2) !== 'AC') {
+            // Un DWG de AutoCAD siempre empieza con "AC" (ej: AC1015, AC1027)
+            return response()->json(
+                ['message' => 'El archivo no es un DWG válido de AutoCAD'],
+                422
+            );
+        }
+
+        // Nombre único basado en UUID + extensión original
+        $nombreGuardado = Str::uuid() . '.' . $extension;
 
         // Guarda en storage/app/public/documentos/ (accesible via symlink)
         $ruta = $archivo->storeAs('documentos', $nombreGuardado, 'public');

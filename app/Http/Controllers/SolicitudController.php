@@ -101,7 +101,7 @@ class SolicitudController extends Controller
     public function actualizarEstado(Request $request, $id)
     {
         $request->validate([
-            'estado' => 'required|in:PENDIENTE,EN_REVISION,APROBADA,RECHAZADA,COMPLETADA',
+            'estado' => 'required|in:PENDIENTE,EN_REVISION,APROBADA,RECHAZADA',
         ]);
 
         $solicitud = Solicitud::findOrFail($id);
