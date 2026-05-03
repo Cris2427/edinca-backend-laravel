@@ -24,13 +24,25 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 | Rutas públicas (sin autenticación)
 |--------------------------------------------------------------------------
+|
+| Rate limiting aplicado para proteger contra fuerza bruta y spam:
+|
+| throttle:5,1  → máximo 5 intentos por minuto por IP (login)
+|   Si se superan, Laravel devuelve 429 Too Many Requests automáticamente.
+|   Ideal para bloquear ataques de fuerza bruta sobre credenciales.
+|
+| throttle:20,1 → máximo 20 envíos por minuto por IP (formulario público)
+|   Evita que bots llenen la BD de solicitudes falsas.
+|
+| Estas reglas son nativas de Laravel (no requieren paquetes externos)
+| y funcionan igual en local, staging y producción (HostGator).
 */
 
-// Login del panel admin
-Route::post('/auth/login', [AuthController::class, 'login']);
+// Login del panel admin — 5 intentos por minuto por IP
+Route::middleware('throttle:5,1')->post('/auth/login', [AuthController::class, 'login']);
 
-// Formulario de contacto del landing — cualquier visitante puede enviar una solicitud
-Route::post('/solicitudes', [SolicitudController::class, 'store']);
+// Formulario de contacto del landing — 20 envíos por minuto por IP
+Route::middleware('throttle:20,1')->post('/solicitudes', [SolicitudController::class, 'store']);
 
 // Verificación de que la API está activa (útil para monitoreo)
 Route::get('/health', fn() => response()->json(['status' => 'ok', 'app' => 'EDINCA API']));
