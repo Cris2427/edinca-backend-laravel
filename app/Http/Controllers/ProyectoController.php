@@ -7,12 +7,16 @@ use Illuminate\Http\Request;
 
 class ProyectoController extends Controller
 {
-    /** GET /api/proyectos */
-    public function index()
+    /** GET /api/proyectos?cliente_id=X */
+    public function index(Request $request)
     {
-        return response()->json(
-            Proyecto::with('cliente')->orderBy('created_at', 'desc')->get()
-        );
+        $query = Proyecto::with('cliente')->orderBy('created_at', 'desc');
+
+        if ($request->filled('cliente_id')) {
+            $query->where('cliente_id', $request->cliente_id);
+        }
+
+        return response()->json($query->get());
     }
 
     /** GET /api/proyectos/{id} */
@@ -28,7 +32,7 @@ class ProyectoController extends Controller
     {
         $data = $request->validate([
             'nombre'              => 'required|string|max:255',
-            'tipo'                => 'required|in:CONSTRUCCION_NUEVA,AMPLIACION,REGULARIZACION,REMODELACION',
+            'tipo'                => 'required|in:CONSTRUCCION_NUEVA,AMPLIACION,REGULARIZACION,REMODELACION,EDIFICIO,LOCAL_COMERCIAL',
             'descripcion'         => 'nullable|string',
             'metros_cuadrados'    => 'nullable|numeric|min:0',
             'numero_trabajadores' => 'nullable|integer|min:0',
@@ -48,7 +52,7 @@ class ProyectoController extends Controller
     public function actualizarEstado(Request $request, $id)
     {
         $request->validate([
-            'estado' => 'required|in:PENDIENTE,EN_EJECUCION,FINALIZADO,CANCELADO',
+            'estado' => 'required|in:PENDIENTE,EN_EJECUCION,FINALIZADO,CANCELADO,ATRASADO',
         ]);
 
         $proyecto = Proyecto::findOrFail($id);
