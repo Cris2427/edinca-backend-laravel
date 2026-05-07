@@ -1,59 +1,235 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# EDINCA — Backend (Laravel)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+API REST del sistema de gestión de EDINCA. Maneja autenticación, clientes, proyectos, solicitudes, cotizaciones y documentos.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Tecnologías
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+| Tecnología | Uso |
+|---|---|
+| Laravel 12 | Framework PHP |
+| PHP 8.2+ | Lenguaje |
+| MySQL | Base de datos |
+| Laravel Sanctum | Autenticación JWT |
+| Laravel Mail | Envío de correos (SMTP) |
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+---
 
-## Learning Laravel
+## Estructura del proyecto
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+```
+backend-laravel/
+├── app/
+│   ├── Http/Controllers/
+│   │   ├── AuthController.php          # Login / logout
+│   │   ├── ClienteController.php       # CRUD clientes
+│   │   ├── SolicitudController.php     # CRUD solicitudes + cambio de estado
+│   │   ├── ProyectoController.php      # CRUD proyectos + cambio de estado
+│   │   ├── CotizacionController.php    # CRUD cotizaciones + envío por correo
+│   │   ├── DocumentoController.php     # Subida de PDF/DWG + envío al cliente
+│   │   └── NotificacionController.php  # Notificaciones del sistema
+│   │
+│   ├── Models/
+│   │   ├── Cliente.php                 # hasMany: proyectos, solicitudes, cotizaciones
+│   │   ├── Proyecto.php                # belongsTo: cliente
+│   │   ├── Solicitud.php               # belongsTo: cliente
+│   │   ├── Cotizacion.php              # belongsTo: cliente
+│   │   ├── Documento.php               # belongsTo: proyecto (→ cliente)
+│   │   ├── Notificacion.php
+│   │   └── Usuario.php                 # Administradores del sistema
+│   │
+│   └── Mail/
+│       ├── CotizacionEnviada.php       # Email con PDF adjunto de cotización
+│       └── DocumentoSubido.php         # Email con PDF/DWG adjunto al cliente
+│
+├── database/
+│   └── migrations/
+│       ├── 2024_01_01_000001_create_usuarios_table.php
+│       ├── 2024_01_01_000002_create_clientes_table.php
+│       ├── 2024_01_01_000003_create_solicitudes_table.php
+│       ├── 2024_01_01_000004_create_proyectos_table.php
+│       ├── 2024_01_01_000005_create_cotizaciones_table.php
+│       ├── 2024_01_01_000006_create_documentos_table.php
+│       ├── 2024_01_01_000007_create_notificaciones_table.php
+│       ├── 2026_05_05_000001_add_tipos_to_proyectos_table.php  # Agrega EDIFICIO, LOCAL_COMERCIAL
+│       └── 2026_05_06_000001_add_atrasado_to_proyectos_estado.php # Agrega estado ATRASADO
+│
+├── config/
+│   └── cors.php                        # Permite peticiones desde www.edinca.cl
+│
+├── routes/
+│   └── api.php                         # Todas las rutas de la API
+│
+├── storage/
+│   └── app/public/documentos/          # Archivos PDF y DWG subidos
+│
+├── .env                                # Variables locales (Laragon) — NO subir a Git
+├── .env.production                     # Variables de producción (HostGator) — NO subir a Git
+└── .env.example                        # Plantilla de variables de entorno
+```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+---
 
-## Laravel Sponsors
+## Base de datos
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### Modelos y relaciones
 
-### Premium Partners
+```
+Usuario          → Administradores del panel
+Cliente          → hasMany Proyectos, Solicitudes, Cotizaciones
+Solicitud        → belongsTo Cliente (opcional al momento de crear)
+Proyecto         → belongsTo Cliente
+Cotizacion       → belongsTo Cliente
+Documento        → belongsTo Proyecto → belongsTo Cliente
+Notificacion     → general del sistema
+```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+### ENUMs importantes
 
-## Contributing
+**Proyecto - tipo:**
+```
+CONSTRUCCION_NUEVA | AMPLIACION | REGULARIZACION | REMODELACION | EDIFICIO | LOCAL_COMERCIAL
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+**Proyecto - estado:**
+```
+PENDIENTE | EN_EJECUCION | ATRASADO | FINALIZADO | CANCELADO
+```
 
-## Code of Conduct
+**Solicitud - tipo:**
+```
+CASA | AMPLIACION | REGULARIZACION | EDIFICIO | LOCAL_COMERCIAL
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+**Solicitud - estado:**
+```
+PENDIENTE | EN_REVISION | APROBADA | RECHAZADA
+```
 
-## Security Vulnerabilities
+---
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## Variables de entorno
 
-## License
+Copiar `.env.example` a `.env` y configurar:
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```env
+APP_NAME=EDINCA
+APP_ENV=local
+APP_KEY=           # Generar con: php artisan key:generate
+APP_DEBUG=true
+APP_URL=http://localhost:8000
+
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=edinca_local
+DB_USERNAME=root
+DB_PASSWORD=
+
+MAIL_MAILER=smtp
+MAIL_HOST=127.0.0.1
+MAIL_PORT=1025      # Mailpit en local
+
+FRONTEND_URL=http://localhost:3000
+SANCTUM_STATEFUL_DOMAINS=localhost:3000
+```
+
+---
+
+## Correr en local (Laragon)
+
+```bash
+# 1. Instalar dependencias
+composer install
+
+# 2. Copiar variables de entorno
+copy .env.example .env
+
+# 3. Generar clave de la app
+php artisan key:generate
+
+# 4. Correr migraciones
+php artisan migrate
+
+# 5. Crear usuario administrador
+php artisan db:seed
+
+# 6. Crear symlink de storage (para documentos)
+php artisan storage:link
+
+# El servidor corre automáticamente en Laragon → http://localhost:8000
+```
+
+---
+
+## Endpoints principales de la API
+
+Todas las rutas (excepto login) requieren header:
+```
+Authorization: Bearer {token}
+```
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| POST | /api/login | Login administrador |
+| POST | /api/logout | Cerrar sesión |
+| GET | /api/clientes | Listar clientes |
+| POST | /api/clientes | Crear cliente |
+| GET | /api/solicitudes | Listar solicitudes |
+| PATCH | /api/solicitudes/{id}/estado | Cambiar estado solicitud |
+| GET | /api/proyectos | Listar proyectos (filtrable por ?cliente_id=X) |
+| POST | /api/proyectos | Crear proyecto |
+| PATCH | /api/proyectos/{id}/estado | Cambiar estado proyecto |
+| GET | /api/cotizaciones | Listar cotizaciones |
+| POST | /api/cotizaciones | Crear y enviar cotización por correo |
+| GET | /api/documentos | Listar documentos |
+| POST | /api/documentos/upload | Subir PDF/DWG y enviar al cliente |
+| DELETE | /api/documentos/{id} | Eliminar documento |
+
+---
+
+## Despliegue en producción (HostGator)
+
+```bash
+# En local: preparar para producción
+composer install --no-dev --optimize-autoloader
+
+# Subir archivos al servidor via Git o File Manager
+# En el servidor ejecutar:
+php artisan migrate --force
+php artisan storage:link
+php artisan config:cache
+php artisan route:cache
+```
+
+### Configuración del servidor
+- **Dominio:** api.edinca.cl
+- **Document Root:** public_html/api/public
+- **PHP:** 8.3 (ea-php83)
+- **Base de datos:** dbacbbmi_edinca_db
+- **Usuario BD:** dbacbbmi_edinca_user
+
+---
+
+## CORS
+
+Configurado en `config/cors.php` para aceptar peticiones desde:
+- `https://www.edinca.cl`
+- `https://edinca.cl`
+- `http://localhost:3000` (desarrollo local)
+
+---
+
+## Correos corporativos
+
+El sistema envía correos desde `contacto@edinca.cl` via SMTP de HostGator:
+- **Servidor:** mail.edinca.cl
+- **Puerto:** 465 (SSL)
+
+Correos disponibles:
+- contacto@edinca.cl
+- departamentolegal@edinca.cl
+- leonardo@edinca.cl
+- eduardo@edinca.cl
+- rodrigo@edinca.cl
