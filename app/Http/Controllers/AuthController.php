@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Usuario;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 /**
  * AuthController
@@ -45,11 +47,17 @@ class AuthController extends Controller
         // Crea un nuevo token Sanctum
         $token = $usuario->createToken('edinca-token')->plainTextToken;
 
+        // Construye la URL pública de la foto si existe
+        $fotoUrl = $usuario->foto
+            ? rtrim(env('APP_URL'), '/') . '/storage/' . $usuario->foto
+            : null;
+
         return response()->json([
-            'token'  => $token,
-            'nombre' => $usuario->nombre,
-            'email'  => $usuario->email,
-            'rol'    => $usuario->rol,
+            'token'    => $token,
+            'nombre'   => $usuario->nombre,
+            'email'    => $usuario->email,
+            'rol'      => $usuario->rol,
+            'foto_url' => $fotoUrl,
         ]);
     }
 
@@ -90,5 +98,54 @@ class AuthController extends Controller
         $usuario->update(['password' => Hash::make($request->passwordNueva)]);
 
         return response()->json(['message' => 'Contraseña actualizada correctamente']);
+    }
+
+    /**
+     * POST /api/auth/foto
+     *
+     * Sube o reemplaza la foto de perfil del admin autenticado.
+     * Guarda el archivo en storage/app/public/fotos/ y devuelve la URL pública.
+     */
+    public function subirFoto(Request $request)
+    {
+        $request->validate([
+            'foto' => 'required|image|max:2048', // máx 2 MB
+        ]);
+
+        $usuario = $request->user();
+
+        // Elimina la foto anterior si existe
+        if ($usuario->foto) {
+            Storage::disk('public')->delete($usuario->foto);
+        }
+
+        // Guarda la nueva foto con nombre UUID
+        $archivo  = $request->file('foto');
+        $nombre   = 'fotos/' . Str::uuid() . '.' . $archivo->getClientOriginalExtension();
+        Storage::disk('public')->put($nombre, file_get_contents($archivo));
+
+        // Guarda la ruta en la BD
+        $usuario->update(['foto' => $nombre]);
+
+        $fotoUrl = rtrim(env('APP_URL'), '/') . '/storage/' . $nombre;
+
+        return response()->json(['foto_url' => $fotoUrl]);
+    }
+
+    /**
+     * DELETE /api/auth/foto
+     *
+     * Elimina la foto de perfil del admin (vuelve al avatar por defecto).
+     */
+    public function eliminarFoto(Request $request)
+    {
+        $usuario = $request->user();
+
+        if ($usuario->foto) {
+            Storage::disk('public')->delete($usuario->foto);
+            $usuario->update(['foto' => null]);
+        }
+
+        return response()->json(['foto_url' => null]);
     }
 }

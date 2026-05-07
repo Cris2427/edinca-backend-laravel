@@ -60,6 +60,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // ── Autenticación ──────────────────────────────────────────────
     Route::post('/auth/logout',           [AuthController::class, 'logout']);
     Route::post('/auth/cambiar-password', [AuthController::class, 'cambiarPassword']);
+    Route::post('/auth/foto',             [AuthController::class, 'subirFoto']);
+    Route::delete('/auth/foto',           [AuthController::class, 'eliminarFoto']);
 
     // ── Solicitudes de cotización ──────────────────────────────────
     Route::get('/solicitudes',                 [SolicitudController::class, 'index']);
