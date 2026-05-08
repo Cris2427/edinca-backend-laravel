@@ -32,7 +32,7 @@ class ProyectoController extends Controller
     {
         $data = $request->validate([
             'nombre'              => 'required|string|max:255',
-            'tipo'                => 'required|in:CONSTRUCCION_NUEVA,AMPLIACION,REGULARIZACION,REMODELACION,EDIFICIO,LOCAL_COMERCIAL',
+            'tipo'                => 'required|in:CONSTRUCCION_NUEVA,AMPLIACION,REGULARIZACION,REMODELACION,EDIFICIO,LOCAL_COMERCIAL,SUBDIVISION',
             'descripcion'         => 'nullable|string',
             'metros_cuadrados'    => 'nullable|numeric|min:0',
             'numero_trabajadores' => 'nullable|integer|min:0',

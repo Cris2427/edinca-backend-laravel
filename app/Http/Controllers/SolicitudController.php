@@ -74,7 +74,7 @@ class SolicitudController extends Controller
             'nombre_completo' => 'required|string|max:255',
             'email'           => 'nullable|email',
             'telefono'        => 'nullable|string|max:20',
-            'tipo_proyecto'   => 'required|in:CASA,EDIFICIO,LOCAL_COMERCIAL,AMPLIACION,REGULARIZACION',
+            'tipo_proyecto'   => 'required|in:CASA,EDIFICIO,LOCAL_COMERCIAL,AMPLIACION,REGULARIZACION,SUBDIVISION',
             'descripcion'     => 'nullable|string',
         ]);
 
