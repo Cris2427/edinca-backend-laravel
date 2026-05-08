@@ -72,7 +72,7 @@ class SolicitudController extends Controller
         // Validación de campos del formulario
         $data = $request->validate([
             'nombre_completo' => 'required|string|max:255',
-            'email'           => 'required|email',
+            'email'           => 'nullable|email',
             'telefono'        => 'nullable|string|max:20',
             'tipo_proyecto'   => 'required|in:CASA,EDIFICIO,LOCAL_COMERCIAL,AMPLIACION,REGULARIZACION',
             'descripcion'     => 'nullable|string',
