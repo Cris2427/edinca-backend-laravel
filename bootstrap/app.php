@@ -25,4 +25,8 @@ return Application::configure(basePath: dirname(__DIR__))
                 ], 422);
             }
         });
+        // devolver 401 JSON en vez de intentar redirigir a login
+        $exceptions->render(function (\Illuminate\Auth\AuthenticationException $e, $request) {
+            return response()->json(['message' => 'No autenticado.'], 401);
+        });
     })->create();
